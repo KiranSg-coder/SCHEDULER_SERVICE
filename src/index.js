@@ -1,7 +1,17 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const app = express();
 const sequelizeConnection = require("./config/database");
+
+const corsOrigin =
+  process.env.CORS_ORIGIN === "*"
+    ? true
+    : (process.env.CORS_ORIGIN || "http://localhost:5173")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+app.use(cors({ origin: corsOrigin, credentials: true }));
 const webhookRoutes = require("./routes/webhook.routes");
 const internalRoutes = require("./routes/internal.routes")
 const { registerEventSubscriptions } = require("./startup/registerSubscriptions");
@@ -15,9 +25,12 @@ require('./jobs/createDailyInstances');
 require('./jobs/closeDays');
 require('./jobs/evaluateDays');
 require('./jobs/activateRulesets');
+require('./jobs/completeChallenges');
 require('./jobs/sendEveningNudges');
 require('./jobs/sendTodoReminders');
 require('./jobs/checkSubscriptions');
+require('./jobs/evaluateEnrollmentUnlocks');
+require('./jobs/sendDigestReminders');
 
 
 app.use('/webhook', webhookRoutes);
@@ -31,7 +44,7 @@ sequelizeConnection
     return sequelizeConnection.sync();
   })
   .then(() => {
-    const PORT = process.env.PORT || 6004;
+    const PORT = process.env.PORT || 6013;
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       registerEventSubscriptions();

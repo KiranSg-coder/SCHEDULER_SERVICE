@@ -42,10 +42,11 @@ cron.schedule("15 * * * *", async () => {
     console.log(`[CheckSubscriptions] ${expiringTrials.length} trial(s) expiring soon`);
 
     let notified = 0;
+    let skipped = 0;
     for (const trial of expiringTrials) {
       try {
-        const NOTIFICATION_URL = process.env.NOTIFICATION_URL || "http://localhost:6005";
-        await require("axios").post(
+        const NOTIFICATION_URL = process.env.NOTIFICATION_URL || "http://localhost:6010";
+        const { data: sendBody } = await require("axios").post(
           `${NOTIFICATION_URL}/internal/send`,
           {
             userId: trial.USERID,
@@ -53,12 +54,18 @@ cron.schedule("15 * * * *", async () => {
             data: {
               planName: trial.DISPLAYNAME || trial.PLANCODE,
               trialEnd: trial.TRIALEND,
+              dateKey: new Date().toISOString().slice(0, 10),
             },
             priority: "HIGH",
           },
           { headers: { "X-Service-Key": process.env.INTERNAL_SERVICE_KEY }, timeout: 5000 }
         );
-        notified++;
+        // Notification service dedupes once/day via DEDUPEKEY — do not count repeats
+        if (sendBody?.data?.skipCode === "DEDUPED") {
+          skipped++;
+        } else {
+          notified++;
+        }
       } catch (notifErr) {
         console.error(`[CheckSubscriptions] Notification failed for user ${trial.USERID}:`, notifErr.message);
       }
@@ -67,9 +74,12 @@ cron.schedule("15 * * * *", async () => {
     await jobLogger.logSuccess(executionId, {
       expiringTrials: expiringTrials.length,
       notified,
+      skippedDeduped: skipped,
     });
 
-    console.log(`[CheckSubscriptions] Done: ${notified}/${expiringTrials.length} notified`);
+    console.log(
+      `[CheckSubscriptions] Done: ${notified} notified, ${skipped} deduped / ${expiringTrials.length}`,
+    );
   } catch (error) {
     console.error("[CheckSubscriptions] Error:", error.message);
     await jobLogger.logFailure(executionId, "CHECK_FAILED", error.message);
