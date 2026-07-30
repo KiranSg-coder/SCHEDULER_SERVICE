@@ -3,7 +3,7 @@ const axios = require('axios');
 
 class NotificationService {
   constructor() {
-    this.baseURL = process.env.NOTIFICATION_URL || 'http://localhost:6005';
+    this.baseURL = process.env.NOTIFICATION_URL || 'http://localhost:6010';
     this.serviceKey = process.env.INTERNAL_SERVICE_KEY;
   }
 
@@ -182,18 +182,39 @@ class NotificationService {
     const url = `${this.baseURL}/internal/send`;
     const templateCode = "TODO_REMINDER";
     try {
+      const safeTitle = String(title || "Task").trim() || "Task";
+      const safeList = String(listName || "").trim();
       const data = {
-        title: title || "Task",
-        listName: listName || "",
+        title: safeTitle,
+        listName: safeList,
         taskId,
         listId: listId != null ? listId : undefined,
         dueAt: dueAtUtc ? new Date(dueAtUtc).toISOString() : "",
+        // Pre-resolved lines for clients / defensive rendering
+        bodyText: safeList ? `${safeList}` : safeTitle,
       };
-      console.log(`[Scheduler→Notification][TODO_REMINDER] userId=${userId}`, JSON.stringify(data));
+      console.log(
+        JSON.stringify({
+          component: "schedulerNotification",
+          stage: "todo_reminder_request",
+          userId,
+          taskId,
+          templateCode,
+          data,
+          ts: new Date().toISOString(),
+        }),
+      );
       const response = await axios.post(
         url,
         { userId, templateCode, data, priority: "HIGH" },
-        { headers: { "X-Service-Key": this.serviceKey } }
+        {
+          headers: {
+            "X-Service-Key": this.serviceKey,
+            "Content-Type": "application/json",
+            "x-correlation-id": `todo_rem_${taskId}_${Date.now().toString(36)}`,
+          },
+          timeout: 15000,
+        },
       );
       console.log(`[Notification] ✓ ${templateCode} for user ${userId} taskId=${taskId}`);
       return response.data;

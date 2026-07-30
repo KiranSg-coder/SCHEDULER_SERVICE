@@ -2,7 +2,7 @@ const axios = require("axios");
 
 class TodoService {
   constructor() {
-    this.baseURL = (process.env.TODO_SERVICE_URL || "http://localhost:6008").replace(/\/$/, "");
+    this.baseURL = (process.env.TODO_SERVICE_URL || "http://localhost:6016").replace(/\/$/, "");
     this.serviceKey = process.env.INTERNAL_SERVICE_KEY;
   }
 
@@ -17,7 +17,11 @@ class TodoService {
         headers: { "X-Service-Key": this.serviceKey },
         timeout: 15000,
       });
-      return response.data?.data?.tasks || [];
+      const payload = response.data?.data || {};
+      return {
+        tasks: payload.tasks || [],
+        expiredTasks: payload.expiredTasks || [],
+      };
     } catch (error) {
       console.error("[Scheduler→TODO] getDueReminders failed:", error.message);
       if (error.response) {
