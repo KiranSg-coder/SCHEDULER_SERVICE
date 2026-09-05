@@ -3,7 +3,7 @@ const axios = require('axios');
 
 class DailyExecutionService {
   constructor() {
-    this.baseURL = process.env.DAILY_EXECUTION_URL;
+    this.baseURL = process.env.DAILY_EXECUTION_URL || "http://localhost:6004";
     this.serviceKey = process.env.INTERNAL_SERVICE_KEY;
   }
 
@@ -49,7 +49,16 @@ class DailyExecutionService {
         params: { userId },
         headers: { 'X-Service-Key': this.serviceKey },
       });
-      return response.data.data;
+      const data = response.data?.data;
+      // GET /day/today returns 200 + { day: null, reason: 'NO_DAY_TODAY' } when no USERDAY
+      if (
+        !data ||
+        data.day === null ||
+        data.reason === 'NO_DAY_TODAY'
+      ) {
+        return null;
+      }
+      return data;
     } catch (error) {
       console.error(`[DailyExecution] getTodayDay failed for user ${userId}:`, error.message);
       throw error;

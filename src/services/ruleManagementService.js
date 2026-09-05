@@ -2,7 +2,7 @@ const axios = require('axios');
 
 class RuleManagementService {
   constructor() {
-    this.baseURL = process.env.RULE_MANAGEMENT_URL;
+    this.baseURL = process.env.RULE_MANAGEMENT_URL || "http://localhost:6012";
     this.serviceKey = process.env.INTERNAL_SERVICE_KEY;
   }
 
@@ -67,6 +67,20 @@ class RuleManagementService {
       return response.data.data;
     } catch (error) {
       console.error('[RuleManagement] activatePendingRulesets failed:', error.message);
+      throw error;
+    }
+  }
+
+  async completeExpiredRulesets() {
+    try {
+      const response = await axios.post(
+        `${this.baseURL}/internal/ruleset/complete-expired`,
+        {},
+        { headers: { 'X-Service-Key': this.serviceKey } }
+      );
+      return response.data.data || { totalCompleted: 0, completedChallenges: [] };
+    } catch (error) {
+      console.error('[RuleManagement] completeExpiredRulesets failed:', error.message);
       throw error;
     }
   }

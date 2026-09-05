@@ -2,7 +2,7 @@ const axios = require("axios");
 
 class SubscriptionService {
   constructor() {
-    this.baseURL = (process.env.SUBSCRIPTION_SERVICE_URL || "http://localhost:6009").replace(/\/$/, "");
+    this.baseURL = (process.env.SUBSCRIPTION_SERVICE_URL || "http://localhost:6015").replace(/\/$/, "");
     this.serviceKey = process.env.INTERNAL_SERVICE_KEY;
   }
 

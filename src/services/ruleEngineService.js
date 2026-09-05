@@ -3,7 +3,7 @@ const axios = require('axios');
 
 class RuleEngineService {
   constructor() {
-    this.baseURL = process.env.RULE_ENGINE_URL;
+    this.baseURL = process.env.RULE_ENGINE_URL || "http://localhost:6005";
     this.serviceKey = process.env.INTERNAL_SERVICE_KEY;
   }
 

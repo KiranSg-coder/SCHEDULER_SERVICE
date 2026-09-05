@@ -1,9 +1,9 @@
 const axios = require("axios");
 
 async function registerEventSubscriptions() {
-  const EVENT_BUS_URL = (process.env.EVENT_BUS_URL || "http://localhost:6006").replace(/\/$/, "");
+  const EVENT_BUS_URL = (process.env.EVENT_BUS_URL || "http://localhost:6007").replace(/\/$/, "");
   const SERVICE_KEY = process.env.INTERNAL_SERVICE_KEY;
-  const baseUrl = (process.env.SCHEDULER_SERVICE_URL || "http://localhost:6004").replace(/\/$/, "");
+  const baseUrl = (process.env.SCHEDULER_SERVICE_URL || "http://localhost:6013").replace(/\/$/, "");
   const webhookUrl = `${baseUrl}/webhook/event`;
 
   const subs = [

@@ -31,6 +31,9 @@ require('./jobs/sendTodoReminders');
 require('./jobs/checkSubscriptions');
 require('./jobs/evaluateEnrollmentUnlocks');
 require('./jobs/sendDigestReminders');
+// V2 — durability + observability for challenge progression
+require('./jobs/reconcileModeChanges');
+require('./jobs/progressionHealthCheck');
 
 
 app.use('/webhook', webhookRoutes);
